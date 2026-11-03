@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Spindelrobot – gångstyrning</title>
+  <style>
+    body{font:16px system-ui;max-width:680px;margin:2rem auto;padding:0 1rem;background:#111827;color:#f3f4f6}
+    input,button{font:inherit;padding:.6rem;border-radius:.4rem;border:1px solid #64748b}
+    button{cursor:pointer;background:#2563eb;color:white}button.stop{background:#b91c1c}
+    .row{display:flex;gap:.8rem;align-items:center;flex-wrap:wrap;margin:1.2rem 0}
+    input[type=range]{width:min(65vw,380px)}fieldset{border:1px solid #475569;border-radius:.6rem;padding:1rem}
+    #status{color:#93c5fd;white-space:pre-wrap}.hint{color:#cbd5e1;font-size:.92rem}
+  </style>
+</head>
+<body>
+  <h1>Spindelrobot</h1>
+  <div class="row"><label>Pico W IP <input id="host" value="192.168.1.50" inputmode="decimal"></label><button id="connect">Anslut</button></div>
+  <p id="status">Frånkopplad</p>
+  <fieldset>
+    <legend>Gångriktning</legend>
+    <p class="hint">0° = framåt · 90° = åt sidan · 180° = bakåt · 270° = åt andra sidan</p>
+    <div class="row"><label>Riktning <input id="heading" type="range" min="0" max="359" value="0"></label><output id="headingValue">0°</output></div>
+    <div class="row"><label>Hastighet <input id="speed" type="range" min="0.1" max="1" step="0.1" value="0.5"></label><output id="speedValue">0.5</output></div>
+    <div class="row"><button id="go">Gå</button><button id="stop" class="stop">Stopp</button></div>
+  </fieldset>
+  <script>
+    let ws;
+    const status = document.querySelector("#status");
+    function sendMove() {
+      if (ws?.readyState !== WebSocket.OPEN) { status.textContent = "Anslut till Pico först"; return; }
+      ws.send(JSON.stringify({type:"move", heading:Number(document.querySelector("#heading").value), speed:Number(document.querySelector("#speed").value)}));
+    }
+    document.querySelector("#heading").addEventListener("input", e => {
+      document.querySelector("#headingValue").value = e.target.value + "°";
+    });
+    document.querySelector("#speed").addEventListener("input", e => {
+      document.querySelector("#speedValue").value = e.target.value;
+    });
+    document.querySelector("#connect").onclick = () => {
+      if (ws) ws.close();
+      const host = document.querySelector("#host").value.trim();
+      ws = new WebSocket(`ws://${host}:8765`);
+      ws.onopen = () => status.textContent = "Ansluten – välj riktning och tryck Gå";
+      ws.onclose = () => status.textContent = "Frånkopplad";
+      ws.onerror = () => status.textContent = "Anslutningsfel – kontrollera IP och Wi-Fi";
+      ws.onmessage = e => {
+        try { const msg = JSON.parse(e.data); status.textContent = msg.type === "error" ? "Fel: " + msg.message : "Pico: " + msg.type; }
+        catch (_) { status.textContent = e.data; }
+      };
+    };
+    document.querySelector("#go").onclick = sendMove;
+    document.querySelector("#stop").onclick = () => {
+      if (ws?.readyState === WebSocket.OPEN) ws.send(JSON.stringify({type:"stop"}));
+    };
+  </script>
+</body>
+</html>
