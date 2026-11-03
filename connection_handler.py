@@ -20,9 +20,9 @@ class ConnectionHandler:
         try:
             await websocket.send(json.dumps({"type": "ready"}))
             async for message in websocket:
-                logger.info("Received WebSocket message: %s", message)
+                logger.debug("Received WebSocket message: %s", message)
                 result = self.commands.handle(message)
-                logger.info("Sending command result: %s", result)
+                logger.debug("Sending command result: %s", result)
                 await websocket.send(json.dumps(result))
         except Exception:
             logger.exception("WebSocket connection failed for %s", remote)

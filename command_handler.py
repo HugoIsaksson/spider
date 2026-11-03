@@ -18,8 +18,13 @@ class CommandHandler:
                 raise ValueError("message must be a JSON object")
             kind = message.get("type")
             if kind == "move":
-                self.gait.move(message["heading"], message["speed"])
-                logger.info("Walking: heading=%s degrees speed=%s", self.gait.heading, self.gait.speed)
+                self.gait.move(
+                    message.get("heading", 0),
+                    message.get("speed", 0),
+                    message.get("turn", 0),
+                )
+                logger.debug("Drive: heading=%s speed=%s turn=%s",
+                             self.gait.heading, self.gait.speed, self.gait.turn)
             elif kind == "stop":
                 self.gait.stop()
                 logger.info("Walking stopped")

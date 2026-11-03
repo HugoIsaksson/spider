@@ -1,57 +1,144 @@
 <!doctype html>
-<html lang="sv">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Spindelrobot – gångstyrning</title>
+  <title>Spider Controller</title>
   <style>
-    body{font:16px system-ui;max-width:680px;margin:2rem auto;padding:0 1rem;background:#111827;color:#f3f4f6}
-    input,button{font:inherit;padding:.6rem;border-radius:.4rem;border:1px solid #64748b}
-    button{cursor:pointer;background:#2563eb;color:white}button.stop{background:#b91c1c}
-    .row{display:flex;gap:.8rem;align-items:center;flex-wrap:wrap;margin:1.2rem 0}
-    input[type=range]{width:min(65vw,380px)}fieldset{border:1px solid #475569;border-radius:.6rem;padding:1rem}
-    #status{color:#93c5fd;white-space:pre-wrap}.hint{color:#cbd5e1;font-size:.92rem}
+    :root{color-scheme:dark;--bg:#090d16;--panel:#111827;--line:#263246;--blue:#58b8ff;--text:#edf4ff;--muted:#91a1b8}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 50% 0,#18243b 0,#090d16 60%);color:var(--text);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+    .page{max-width:980px;margin:auto;padding:26px 18px 42px}header{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:22px}
+    h1{font-size:clamp(1.35rem,3vw,2rem);letter-spacing:.04em;margin:0}.sub{color:var(--muted);margin:.2rem 0 0}
+    .connection{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:.9rem}.dot{width:9px;height:9px;border-radius:50%;background:#e05b68;box-shadow:0 0 10px #e05b6866}.dot.online{background:#63dfab;box-shadow:0 0 10px #63dfab88}
+    .panel{background:linear-gradient(145deg,#141d2d,#0d1421);border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:0 18px 55px #0005}
+    .connect-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:18px}input,button{font:inherit;color:inherit;border-radius:9px;border:1px solid #34445c;background:#0a111d;padding:10px 13px}input{width:min(310px,65vw)}button{cursor:pointer;background:#1a2d45;transition:.15s}button:hover{filter:brightness(1.2)}button:active{transform:translateY(1px)}
+    #connect{background:#1667a8;border-color:#348bc8}.stop{background:#8b2637;border-color:#b44658;min-width:125px;font-weight:700;letter-spacing:.05em}
+    .controller-wrap{display:flex;justify-content:center;overflow:hidden;padding:20px 0 8px}.controller{position:relative;width:min(760px,96vw);height:390px;flex:none}
+    .shell{position:absolute;inset:42px 7% 5px;background:linear-gradient(155deg,#333b48,#202733 48%,#171d28);border:1px solid #4a5668;border-radius:43% 43% 35% 35% / 31% 31% 29% 29%;box-shadow:inset 0 2px 5px #ffffff16,0 26px 35px #0008}
+    .shell:before,.shell:after{content:"";position:absolute;top:-14px;width:29%;height:47px;border:1px solid #465365;background:linear-gradient(#303948,#1d2531);border-radius:17px 17px 7px 7px}.shell:before{left:5%}.shell:after{right:5%}
+    .touchpad{position:absolute;left:50%;top:13%;transform:translateX(-50%);width:25%;height:29%;border-radius:10px;border:1px solid #111722;background:linear-gradient(145deg,#171e28,#252d39);box-shadow:inset 0 1px 4px #0009}
+    .touchpad:after{content:"";position:absolute;left:50%;top:0;height:8px;border-left:1px solid #090d14}.speaker{position:absolute;left:50%;top:45%;transform:translateX(-50%);width:65px;height:5px;border-top:2px dotted #647184;border-bottom:2px dotted #647184;opacity:.75}
+    .brand{position:absolute;left:50%;top:35%;transform:translateX(-50%);width:42px;height:42px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#394455,#151b25 70%);border:1px solid #4d5a6d;color:#b8c6d8;font-weight:800;font-size:17px;display:grid;place-items:center;box-shadow:0 2px 5px #0009}
+    .smallkey{position:absolute;top:46%;width:30px;height:8px;border-radius:5px;background:#171d28;border:1px solid #505a69}.share{left:39%}.options{right:39%}
+    .side{position:absolute;top:46%;width:42%;display:flex;align-items:center;justify-content:space-around;gap:12px}.side.left{left:3%}.side.right{right:3%}
+    .dpad{position:relative;width:100px;height:100px;flex:none}.dpad i{position:absolute;background:linear-gradient(135deg,#394250,#222a35);border:1px solid #151b25;box-shadow:0 2px 4px #0008}.dpad .up,.dpad .down{width:30px;height:43px;left:35px;border-radius:6px}.dpad .up{top:0}.dpad .down{bottom:0}.dpad .left,.dpad .right{width:43px;height:30px;top:35px;border-radius:6px}.dpad .left{left:0}.dpad .right{right:0}.dpad .center{position:absolute;left:35px;top:35px;width:30px;height:30px;background:#28313e}
+    .stick-base{width:112px;height:112px;border-radius:50%;background:radial-gradient(circle,#171e29 0 53%,#101620 55% 68%,#394352 70% 74%,#1b222e 77%);border:1px solid #111722;box-shadow:inset 0 5px 10px #000b,0 3px 5px #0008;position:relative;touch-action:none;flex:none;cursor:grab}.stick-base:active{cursor:grabbing}.stick-knob{position:absolute;left:50%;top:50%;width:55px;height:55px;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle at 36% 30%,#555f6d,#303945 62%,#1d2530);border:2px solid #111720;box-shadow:inset 0 2px 4px #ffffff20,0 2px 4px #000b;pointer-events:none}
+    .stick-label{position:absolute;left:50%;top:calc(100% + 13px);transform:translateX(-50%);font-size:.72rem;font-weight:800;letter-spacing:.11em;color:#bac8d8}.face{position:relative;width:82px;height:82px;flex:none}.face button{position:absolute;width:36px;height:36px;padding:0;border-radius:50%;background:#202936;border:1px solid #596575;display:grid;place-items:center;font-size:19px;font-weight:700;opacity:.78;cursor:not-allowed}.face .triangle{left:23px;top:0;color:#62dfa0}.face .circle{right:0;top:23px;color:#ff6573}.face .cross{left:23px;bottom:0;color:#64b6ff}.face .square{left:0;top:23px;color:#df83ff}
+    .mapping{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px auto 0;max-width:680px}.map-item{padding:11px 13px;border:1px solid #263246;border-radius:11px;background:#0c1320}.map-item b{display:block;color:#eaf3ff;margin-bottom:2px}.map-item span{color:var(--muted);font-size:.9rem}.footer{display:flex;justify-content:center;margin-top:16px}.note{text-align:center;color:var(--muted);font-size:.85rem;margin:14px 0 0}
+    @media(max-width:620px){.page{padding:18px 10px}.controller{transform:scale(.79);transform-origin:top center;margin-bottom:-75px}.panel{padding:13px}.mapping{grid-template-columns:1fr}.side{width:46%;gap:3px}.side.left{left:0}.side.right{right:0}.stick-base{width:94px;height:94px}.stick-knob{width:48px;height:48px}.dpad{transform:scale(.83)}.face{transform:scale(.86)}header{align-items:flex-start;flex-direction:column}}
   </style>
 </head>
 <body>
-  <h1>Spindelrobot</h1>
-  <div class="row"><label>Pico W IP <input id="host" value="192.168.1.50" inputmode="decimal"></label><button id="connect">Anslut</button></div>
-  <p id="status">Frånkopplad</p>
-  <fieldset>
-    <legend>Gångriktning</legend>
-    <p class="hint">0° = framåt · 90° = åt sidan · 180° = bakåt · 270° = åt andra sidan</p>
-    <div class="row"><label>Riktning <input id="heading" type="range" min="0" max="359" value="0"></label><output id="headingValue">0°</output></div>
-    <div class="row"><label>Hastighet <input id="speed" type="range" min="0.1" max="1" step="0.1" value="0.5"></label><output id="speedValue">0.5</output></div>
-    <div class="row"><button id="go">Gå</button><button id="stop" class="stop">Stopp</button></div>
-  </fieldset>
+  <main class="page">
+    <header>
+      <div><h1>SPIDER CONTROL</h1><p class="sub">Dual stick drive</p></div>
+      <div class="connection"><span class="dot" id="dot"></span><span id="status">Disconnected</span></div>
+    </header>
+    <section class="panel">
+      <div class="connect-row">
+        <input id="host" value="192.168.1.50" aria-label="Raspberry Pi IP address" placeholder="Raspberry Pi IP">
+        <button id="connect">Connect</button>
+      </div>
+      <div class="controller-wrap">
+        <div class="controller" aria-label="Dual stick robot controller">
+          <div class="shell"></div><div class="touchpad"></div><div class="speaker"></div><div class="brand">P</div>
+          <div class="smallkey share"></div><div class="smallkey options"></div>
+          <div class="side left">
+            <div class="dpad" aria-hidden="true"><i class="up"></i><i class="down"></i><i class="left"></i><i class="right"></i><i class="center"></i></div>
+            <div class="stick-base" data-stick="left" aria-label="L3 rotate stick"><div class="stick-knob"></div><span class="stick-label">L3</span></div>
+          </div>
+          <div class="side right">
+            <div class="stick-base" data-stick="right" aria-label="R3 movement stick"><div class="stick-knob"></div><span class="stick-label">R3</span></div>
+            <div class="face" aria-label="Actions not mapped yet">
+              <button class="triangle" title="Not mapped yet" disabled>△</button>
+              <button class="circle" title="Not mapped yet" disabled>○</button>
+              <button class="square" title="Not mapped yet" disabled>□</button>
+              <button class="cross" title="Not mapped yet" disabled>×</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mapping">
+        <div class="map-item"><b>R3 · Move</b><span>Push to walk in any direction. Release to stop translating.</span></div>
+        <div class="map-item"><b>L3 · Turn</b><span>Push left or right to rotate around the robot's center. Combine with R3 to curve.</span></div>
+      </div>
+      <p class="note">△ ○ × □ are reserved for future actions such as crouch and wave.</p>
+      <div class="footer"><button class="stop" id="stop">STOP</button></div>
+    </section>
+  </main>
   <script>
+    const statusText = document.querySelector("#status");
+    const dot = document.querySelector("#dot");
+    const sticks = {left:{x:0,y:0}, right:{x:0,y:0}};
     let ws;
-    const status = document.querySelector("#status");
-    function sendMove() {
-      if (ws?.readyState !== WebSocket.OPEN) { status.textContent = "Anslut till Pico först"; return; }
-      ws.send(JSON.stringify({type:"move", heading:Number(document.querySelector("#heading").value), speed:Number(document.querySelector("#speed").value)}));
+    let lastCommand = "";
+    let active = {left:null,right:null};
+
+    function setStatus(message, online=false) {
+      statusText.textContent = message;
+      dot.classList.toggle("online", online);
     }
-    document.querySelector("#heading").addEventListener("input", e => {
-      document.querySelector("#headingValue").value = e.target.value + "°";
-    });
-    document.querySelector("#speed").addEventListener("input", e => {
-      document.querySelector("#speedValue").value = e.target.value;
-    });
+    function sendDrive(force=false) {
+      if (ws?.readyState !== WebSocket.OPEN) return;
+      const r = sticks.right;
+      const speed = Math.min(1, Math.hypot(r.x,r.y));
+      const heading = speed < 0.04 ? 0 : (Math.atan2(r.x,-r.y) * 180 / Math.PI + 360) % 360;
+      const turn = Math.max(-1,Math.min(1,-sticks.left.x));
+      const command = {type:"move",heading:Number(heading.toFixed(1)),speed:Number(speed.toFixed(2)),turn:Number(turn.toFixed(2))};
+      const encoded = JSON.stringify(command);
+      if (force || encoded !== lastCommand) { ws.send(encoded); lastCommand = encoded; }
+    }
+    function updateStickVisual(name) {
+      const element = document.querySelector(`[data-stick="${name}"]`);
+      const knob = element.querySelector(".stick-knob");
+      const radius = element.clientWidth * .29;
+      knob.style.left = `calc(50% + ${sticks[name].x * radius}px)`;
+      knob.style.top = `calc(50% + ${sticks[name].y * radius}px)`;
+    }
+    function setStick(name,x,y) {
+      const length = Math.hypot(x,y);
+      const scale = length > 1 ? 1 / length : 1;
+      sticks[name] = {x:x*scale,y:y*scale};
+      updateStickVisual(name);
+      sendDrive();
+    }
+    for (const base of document.querySelectorAll(".stick-base")) {
+      const name = base.dataset.stick;
+      base.addEventListener("pointerdown", event => {
+        event.preventDefault(); active[name] = event.pointerId; base.setPointerCapture(event.pointerId);
+        const rect = base.getBoundingClientRect();
+        const radius = rect.width * .32;
+        setStick(name,(event.clientX-(rect.left+rect.width/2))/radius,(event.clientY-(rect.top+rect.height/2))/radius);
+      });
+      base.addEventListener("pointermove", event => {
+        if (active[name] !== event.pointerId) return;
+        const rect = base.getBoundingClientRect(); const radius = rect.width * .32;
+        setStick(name,(event.clientX-(rect.left+rect.width/2))/radius,(event.clientY-(rect.top+rect.height/2))/radius);
+      });
+      const release = event => {
+        if (active[name] !== event.pointerId) return;
+        active[name] = null; setStick(name,0,0); sendDrive(true);
+      };
+      base.addEventListener("pointerup",release); base.addEventListener("pointercancel",release);
+    }
     document.querySelector("#connect").onclick = () => {
       if (ws) ws.close();
       const host = document.querySelector("#host").value.trim();
       ws = new WebSocket(`ws://${host}:8765`);
-      ws.onopen = () => status.textContent = "Ansluten – välj riktning och tryck Gå";
-      ws.onclose = () => status.textContent = "Frånkopplad";
-      ws.onerror = () => status.textContent = "Anslutningsfel – kontrollera IP och Wi-Fi";
-      ws.onmessage = e => {
-        try { const msg = JSON.parse(e.data); status.textContent = msg.type === "error" ? "Fel: " + msg.message : "Pico: " + msg.type; }
-        catch (_) { status.textContent = e.data; }
+      ws.onopen = () => { lastCommand=""; setStatus("Connected",true); sendDrive(true); };
+      ws.onclose = () => setStatus("Disconnected");
+      ws.onerror = () => setStatus("Connection error — check IP and Wi-Fi");
+      ws.onmessage = event => {
+        try {
+          const msg = JSON.parse(event.data);
+          if (msg.type === "error") setStatus("Command error: " + msg.message, true);
+        } catch (_) { /* Ignore non-JSON server messages. */ }
       };
     };
-    document.querySelector("#go").onclick = sendMove;
     document.querySelector("#stop").onclick = () => {
-      if (ws?.readyState === WebSocket.OPEN) ws.send(JSON.stringify({type:"stop"}));
+      sticks.left={x:0,y:0}; sticks.right={x:0,y:0};
+      document.querySelectorAll(".stick-base").forEach(el=>updateStickVisual(el.dataset.stick));
+      if(ws?.readyState===WebSocket.OPEN){ws.send(JSON.stringify({type:"stop"}));lastCommand="";}
     };
   </script>
 </body>
