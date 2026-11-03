@@ -4,12 +4,25 @@ ANGLE_MIN = 0
 ANGLE_MAX = 180
 WEBSOCKET_PORT = 8765
 
-# Initial joint-space gait tuning (degrees). These are starting values and
-# must be calibrated for the assembled leg geometry and servo orientation.
-GAIT_STEP_DEGREES = 20
-GAIT_LIFT_DEGREES = 18
-GAIT_CYCLE_SECONDS = 1.2
+# Measured joint-axis/link dimensions, in millimeters.
+COXA_LENGTH_MM = 33.0
+FEMUR_LENGTH_MM = 49.0
+TIBIA_LENGTH_MM = 79.0
+BODY_FRONT_REAR_COXA_SPACING_MM = 66.0
+BODY_LEFT_RIGHT_COXA_SPACING_MM = 69.0
+FEMUR_WIDTH_MM = 38.0  # physical width; not used by planar IK
+
+# Neutral foot target, measured from each coxa axis. Initial coxa-axis-to-floor
+# height uses the 40 mm measurement provided; verify the exact reference plane.
+IK_HOME_RADIAL_MM = 100.0
+IK_HOME_HEIGHT_MM = 40.0
+
+# Cartesian gait tuning in millimeters, not joint-angle oscillations.
+GAIT_STEP_LENGTH_MM = 30.0
+GAIT_LIFT_MM = 20.0
+GAIT_CYCLE_SECONDS = 1.4
 GAIT_UPDATE_SECONDS = 0.04
+GAIT_INPUT_SMOOTH_SECONDS = 0.18
 
 # Channel assignment in coxa, femur, tibia order, translated from the legacy
 # leg.servos order (tibia, femur, coxa).
@@ -36,3 +49,12 @@ SERVO_CENTER = {
     "rear_left":   {"coxa": 60, "femur": 60, "tibia": 120},
     "rear_right":  {"coxa": 60, "femur": 60, "tibia": 120},
 }
+
+# Four-beat crawl: one leg swings at a time to keep three feet planted.
+GAIT_LEG_PHASES = {
+    "front_left": 0.00,
+    "front_right": 0.50,
+    "rear_left": 0.75,
+    "rear_right": 0.25,
+}
+GAIT_SWING_FRACTION = 0.22
