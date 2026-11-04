@@ -15,12 +15,12 @@ FEMUR_WIDTH_MM = 38.0  # physical width; not used by planar IK
 # Neutral foot target, measured from each coxa axis. Initial coxa-axis-to-floor
 # height uses the 40 mm measurement provided; verify the exact reference plane.
 IK_HOME_RADIAL_MM = 100.0
-IK_HOME_HEIGHT_MM = 40.0
+IK_HOME_HEIGHT_MM = 25.0
 
 # Cartesian gait tuning in millimeters, not joint-angle oscillations.
-GAIT_STEP_LENGTH_MM = 30.0
-GAIT_LIFT_MM = 20.0
-GAIT_CYCLE_SECONDS = 1.4
+GAIT_STEP_LENGTH_MM = 45.0
+GAIT_LIFT_MM = 25.0
+GAIT_CYCLE_SECONDS = 3.5
 GAIT_UPDATE_SECONDS = 0.04
 GAIT_INPUT_SMOOTH_SECONDS = 0.18
 

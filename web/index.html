@@ -62,6 +62,7 @@
         <div class="map-item"><b>R3 · Move</b><span>Push to walk in any direction. Release to stop translating.</span></div>
         <div class="map-item"><b>L3 · Turn</b><span>Push left or right to rotate around the robot's center. Combine with R3 to curve.</span></div>
       </div>
+      <p class="note" id="drive-readout">R3 centered · turn 0</p>
       <p class="note">△ ○ × □ are reserved for future actions such as crouch and wave.</p>
       <div class="footer"><button class="stop" id="stop">STOP</button></div>
     </section>
@@ -79,11 +80,13 @@
       dot.classList.toggle("online", online);
     }
     function sendDrive(force=false) {
-      if (ws?.readyState !== WebSocket.OPEN) return;
       const r = sticks.right;
       const speed = Math.min(1, Math.hypot(r.x,r.y));
       const heading = speed < 0.04 ? 0 : (Math.atan2(r.x,-r.y) * 180 / Math.PI + 360) % 360;
       const turn = Math.max(-1,Math.min(1,-sticks.left.x));
+      const direction = speed < 0.04 ? "centered" : `${heading.toFixed(0)}°`;
+      document.querySelector("#drive-readout").textContent = `R3 ${direction} · speed ${speed.toFixed(2)} · turn ${turn.toFixed(2)}`;
+      if (ws?.readyState !== WebSocket.OPEN) return;
       const command = {type:"move",heading:Number(heading.toFixed(1)),speed:Number(speed.toFixed(2)),turn:Number(turn.toFixed(2))};
       const encoded = JSON.stringify(command);
       if (force || encoded !== lastCommand) { ws.send(encoded); lastCommand = encoded; }
